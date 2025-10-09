@@ -18,8 +18,16 @@ return {
       window = {
         mappings = {
           ['\\'] = 'close_window',
+          ['r'] = 'refresh',
+          ['R'] = 'refresh',
         },
       },
+      -- Auto-refresh when files change
+      use_libuv_file_watcher = true,
+      -- Refresh on focus
+      refresh_on_focus = true,
+      -- Refresh on write
+      refresh_on_write = true,
     },
   },
 }

@@ -1,89 +1,3 @@
---[[
-
-=====================================================================
-==================== READ THIS BEFORE CONTINUING ====================
-=====================================================================
-========                                    .-----.          ========
-========         .----------------------.   | === |          ========
-========         |.-""""""""""""""""""-.|   |-----|          ========
-========         ||                    ||   | === |          ========
-========         ||   KICKSTART.NVIM   ||   |-----|          ========
-========         ||                    ||   | === |          ========
-========         ||                    ||   |-----|          ========
-========         ||:Tutor              ||   |:::::|          ========
-========         |'-..................-'|   |____o|          ========
-========         `"")----------------(""`   ___________      ========
-========        /::::::::::|  |::::::::::\  \ no mouse \     ========
-========       /:::========|  |==hjkl==:::\  \ required \    ========
-========      '""""""""""""'  '""""""""""""'  '""""""""""'   ========
-========                                                     ========
-=====================================================================
-=====================================================================
-
-What is Kickstart?
-
-  Kickstart.nvim is *not* a distribution.
-
-  Kickstart.nvim is a starting point for your own configuration.
-    The goal is that you can read every line of code, top-to-bottom, understand
-    what your configuration is doing, and modify it to suit your needs.
-
-    Once you've done that, you can start exploring, configuring and tinkering to
-    make Neovim your own! That might mean leaving Kickstart just the way it is for a while
-    or immediately breaking it into modular pieces. It's up to you!
-
-    If you don't know anything about Lua, I recommend taking some time to read through
-    a guide. One possible example which will only take 10-15 minutes:
-      - https://learnxinyminutes.com/docs/lua/
-
-    After understanding a bit more about Lua, you can use `:help lua-guide` as a
-    reference for how Neovim integrates Lua.
-    - :help lua-guide
-    - (or HTML version): https://neovim.io/doc/user/lua-guide.html
-
-Kickstart Guide:
-
-  TODO: The very first thing you should do is to run the command `:Tutor` in Neovim.
-
-    If you don't know what this means, type the following:
-      - <escape key>
-      - :
-      - Tutor
-      - <enter key>
-
-    (If you already know the Neovim basics, you can skip this step.)
-
-  Once you've completed that, you can continue working through **AND READING** the rest
-  of the kickstart init.lua.
-
-  Next, run AND READ `:help`.
-    This will open up a help window with some basic information
-    about reading, navigating and searching the builtin help documentation.
-
-    This should be the first place you go to look when you're stuck or confused
-    with something. It's one of my favorite Neovim features.
-
-    MOST IMPORTANTLY, we provide a keymap "<space>sh" to [s]earch the [h]elp documentation,
-    which is very useful when you're not exactly sure of what you're looking for.
-
-  I have left several `:help X` comments throughout the init.lua
-    These are hints about where to find more information about the relevant settings,
-    plugins or Neovim features used in Kickstart.
-
-   NOTE: Look for lines like this
-
-    Throughout the file. These are for you, the reader, to help you understand what is happening.
-    Feel free to delete them once you know what you're doing, but they should serve as a guide
-    for when you are first encountering a few different constructs in your Neovim config.
-
-If you experience any errors while trying to install kickstart, run `:checkhealth` for more info.
-
-I hope you enjoy your Neovim journey,
-- TJ
-
-P.S. You can delete this when you're done too. It's your config now! :)
---]]
-
 -- Set <space> as the leader key
 -- See `:help mapleader`
 --  NOTE: Must happen before plugins are loaded (otherwise wrong leader will be used)
@@ -284,6 +198,23 @@ require('lazy').setup({
     },
   },
 
+  -- getting better at vim commands
+  {
+    'ThePrimeagen/vim-be-good',
+  },
+
+  -- handles copying to clipboard
+  {
+    'ojroques/nvim-osc52',
+    config = function()
+      require('osc52').setup()
+      vim.keymap.set('v', '<leader>y', require('osc52').copy_visual, { noremap = true, silent = true })
+      vim.keymap.set('n', '<leader>c', require('osc52').copy_operator, { expr = true })
+      vim.keymap.set('n', '<leader>cc', '<leader>c_', { remap = true })
+      vim.keymap.set('v', '<leader>c', require('osc52').copy_visual)
+    end,
+  },
+
   -- NOTE: Plugins can also be configured to run Lua code when they are loaded.
   --
   -- This is often very useful to both group configuration, as well as handle
@@ -436,6 +367,15 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
       vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
       vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = '[ ] Find existing buffers' })
+
+      local themes = require 'telescope.themes'
+      -- diagnostics
+      vim.keymap.set('n', '<leader>sD', function()
+        builtin.diagnostics(themes.get_dropdown {
+          previewer = false,
+          wrap_results = true,
+        })
+      end, { desc = '[S]earch [D]iagnostics (wrapped)' })
 
       -- Slightly advanced example of overriding default behavior and theme
       vim.keymap.set('n', '<leader>/', function()
@@ -630,7 +570,14 @@ require('lazy').setup({
       -- See :help vim.diagnostic.Opts
       vim.diagnostic.config {
         severity_sort = true,
-        float = { border = 'rounded', source = 'if_many' },
+        float = {
+          border = 'rounded',
+          source = 'if_many',
+          max_width = 80, -- Limits line length of floating diagnostic window
+          focusable = false, -- Optional: keeps it from stealing cursor
+          header = '', -- Optional: no title bar
+          prefix = '', -- Optional: no prefix before text
+        },
         underline = { severity = vim.diagnostic.severity.ERROR },
         signs = vim.g.have_nerd_font and {
           text = {
@@ -644,13 +591,7 @@ require('lazy').setup({
           source = 'if_many',
           spacing = 2,
           format = function(diagnostic)
-            local diagnostic_message = {
-              [vim.diagnostic.severity.ERROR] = diagnostic.message,
-              [vim.diagnostic.severity.WARN] = diagnostic.message,
-              [vim.diagnostic.severity.INFO] = diagnostic.message,
-              [vim.diagnostic.severity.HINT] = diagnostic.message,
-            }
-            return diagnostic_message[diagnostic.severity]
+            return diagnostic.message
           end,
         },
       }
@@ -674,7 +615,9 @@ require('lazy').setup({
         -- clangd = {},
         -- gopls = {},
         -- pyright = {},
-        -- rust_analyzer = {},
+
+        -- rust_analyzer = {}, -- Removed in favor of rustaceanvim
+
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
         --
         -- Some languages (like typescript) have entire language plugins that can be useful:
@@ -731,6 +674,55 @@ require('lazy').setup({
             server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
             require('lspconfig')[server_name].setup(server)
           end,
+        },
+      }
+    end,
+  },
+
+  { -- Rust development
+    'mrcjkb/rustaceanvim',
+    version = '^6', -- Recommended
+    lazy = false, -- This plugin is already lazy
+    ft = { 'rust' },
+    config = function()
+      vim.g.rustaceanvim = {
+        -- Plugin configuration
+        tools = {
+          -- rust-analyzer settings
+          inlay_hints = {
+            highlight = "Comment",
+            show_parameter_hints = true,
+            parameter_hints_prefix = "<- ",
+            other_hints_prefix = "=> ",
+          },
+        },
+        -- LSP configuration
+        server = {
+          on_attach = function(client, bufnr)
+            -- Keymaps for Rust-specific commands
+            local opts = { noremap = true, silent = true, buffer = bufnr }
+            vim.keymap.set('n', '<leader>rR', '<cmd>RustReloadWorkspace<CR>', vim.tbl_extend('force', opts, { desc = 'Rust: Reload Workspace' }))
+            vim.keymap.set('n', '<leader>rb', '<cmd>RustBuild<CR>', vim.tbl_extend('force', opts, { desc = 'Rust: Build' }))
+            vim.keymap.set('n', '<leader>rt', '<cmd>RustTest<CR>', vim.tbl_extend('force', opts, { desc = 'Rust: Test' }))
+            vim.keymap.set('n', '<leader>rr', '<cmd>RustRun<CR>', vim.tbl_extend('force', opts, { desc = 'Rust: Run' }))
+            vim.keymap.set('n', '<leader>rc', '<cmd>RustCheck<CR>', vim.tbl_extend('force', opts, { desc = 'Rust: Check' }))
+            vim.keymap.set('n', '<leader>rC', '<cmd>RustClippy<CR>', vim.tbl_extend('force', opts, { desc = 'Rust: Clippy' }))
+            vim.keymap.set('n', '<leader>rd', '<cmd>RustDebuggables<CR>', vim.tbl_extend('force', opts, { desc = 'Rust: Debuggables' }))
+            vim.keymap.set('n', '<leader>rv', '<cmd>RustViewCrateGraph<CR>', vim.tbl_extend('force', opts, { desc = 'Rust: View Crate Graph' }))
+          end,
+          settings = {
+            ['rust-analyzer'] = {
+              checkOnSave = {
+                command = "clippy",
+              },
+              cargo = {
+                allFeatures = true,
+              },
+              procMacro = {
+                enable = true,
+              },
+            },
+          },
         },
       }
     end,
@@ -835,7 +827,7 @@ require('lazy').setup({
         -- <c-k>: Toggle signature help
         --
         -- See :h blink-cmp-config-keymap for defining your own keymap
-        preset = 'default',
+        preset = 'enter',
 
         -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
         --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
@@ -974,11 +966,11 @@ require('lazy').setup({
   --  Uncomment any of the lines below to enable them (you will need to restart nvim).
   --
   -- require 'kickstart.plugins.debug',
-  -- require 'kickstart.plugins.indent_line',
-  -- require 'kickstart.plugins.lint',
-  -- require 'kickstart.plugins.autopairs',
-  -- require 'kickstart.plugins.neo-tree',
-  -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
+  require 'kickstart.plugins.indent_line',
+  require 'kickstart.plugins.lint',
+  require 'kickstart.plugins.autopairs',
+  require 'kickstart.plugins.neo-tree',
+  require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    This is the easiest way to modularize your config.
