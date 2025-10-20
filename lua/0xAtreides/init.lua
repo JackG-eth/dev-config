@@ -77,6 +77,7 @@ require('lazy').setup({
         { '<leader>t', group = '[T]oggle' },
         { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
         { '<leader>r', group = '[R]ust' },
+        { '<leader>C', group = '[C]rates' },
       },
     },
   },
@@ -299,17 +300,6 @@ require('lazy').setup({
           },
         },
         server = {
-          on_attach = function(client, bufnr)
-            local opts = { noremap = true, silent = true, buffer = bufnr }
-            vim.keymap.set('n', '<leader>rR', '<cmd>RustReloadWorkspace<CR>', vim.tbl_extend('force', opts, { desc = 'Rust: Reload Workspace' }))
-            vim.keymap.set('n', '<leader>rb', '<cmd>RustBuild<CR>', vim.tbl_extend('force', opts, { desc = 'Rust: Build' }))
-            vim.keymap.set('n', '<leader>rt', '<cmd>RustTest<CR>', vim.tbl_extend('force', opts, { desc = 'Rust: Test' }))
-            vim.keymap.set('n', '<leader>rr', '<cmd>RustRun<CR>', vim.tbl_extend('force', opts, { desc = 'Rust: Run' }))
-            vim.keymap.set('n', '<leader>rc', '<cmd>RustCheck<CR>', vim.tbl_extend('force', opts, { desc = 'Rust: Check' }))
-            vim.keymap.set('n', '<leader>rC', '<cmd>RustClippy<CR>', vim.tbl_extend('force', opts, { desc = 'Rust: Clippy' }))
-            vim.keymap.set('n', '<leader>rd', '<cmd>RustDebuggables<CR>', vim.tbl_extend('force', opts, { desc = 'Rust: Debuggables' }))
-            vim.keymap.set('n', '<leader>rv', '<cmd>RustViewCrateGraph<CR>', vim.tbl_extend('force', opts, { desc = 'Rust: View Crate Graph' }))
-          end,
           settings = {
             ['rust-analyzer'] = {
               checkOnSave = {
@@ -325,6 +315,22 @@ require('lazy').setup({
           },
         },
       }
+    end,
+  },
+
+  -- Crates.nvim (for managing Cargo.toml dependencies)
+  {
+    'saecki/crates.nvim',
+    event = { 'BufRead Cargo.toml' },
+    dependencies = { 'nvim-lua/plenary.nvim' },
+    config = function()
+      require('crates').setup({
+        completion = {
+          cmp = {
+            enabled = true,
+          },
+        },
+      })
     end,
   },
 
